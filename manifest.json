@@ -1,0 +1,26 @@
+{
+  "name": "Price Per Unit",
+  "version": "1.0.0",
+  "description": "A script that will scrape a shopping web page to find the best price per unit",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://target.com/*",
+        "https://amazon.com/*",
+        "https://shop.shipt.com/*",
+        "https://sameday.costco.com/*",
+        "https://sayweee.com/*"
+      ],
+      "js": [
+        "pricePerUnit.js"
+      ]
+    }
+  ],
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab"
+  ],
+  "manifest_version": 0,
+}
