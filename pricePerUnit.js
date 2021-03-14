@@ -331,13 +331,15 @@ function calculate() {
       clearInterval(interval);
       setTimeout(() => {
         window.scrollTo(0, 0);
-        const searchResults = runSearch();
-        if (Object.keys(searchResults).length) {
-          console.log("Price per unit. Lower is better. \n", searchResults);
-          renderModal(searchResults);
-          return searchResults;
-        };
-        console.log('No results');
+        setTimeout(() => {
+          const searchResults = runSearch();
+          if (Object.keys(searchResults).length) {
+            console.log("Price per unit. Lower is better. \n", searchResults);
+            renderModal(searchResults);
+            return searchResults;
+          };
+          console.log('No results');
+        }, 0);
       }, 0);
     };
     i++;
