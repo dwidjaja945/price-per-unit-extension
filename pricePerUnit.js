@@ -256,6 +256,7 @@ function renderModal(searchResults) {
   const headerLeft = document.createElement('h3');
   headerLeft.innerText = "Please double check values!";
   const headerRight = document.createElement('button');
+  headerRight['aria-label'] = "close result list";
   headerRight.innerText = 'X';
   headerRight.onclick = () => {
     document.body.removeChild(modal);
@@ -286,7 +287,7 @@ function renderModal(searchResults) {
         result.link.click();
       };
       listItem.innerHTML = `<b>${result[0]}</b>: ${result[1]}`;
-      unitList.appendChild(listItem);
+      append(unitList).add(listItem);
     });
     const label = document.createElement('h4');
     label.innerText = `Unit: ${unit}`;
