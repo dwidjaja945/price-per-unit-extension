@@ -253,7 +253,7 @@ function renderModal(searchResults) {
     alignItems: 'center',
     backgroundColor: '#eee',
   });
-  const headerLeft = document.createElement('h3');
+  const headerLeft = document.createElement('h4');
   headerLeft.innerText = "Please double check values!";
   const headerRight = document.createElement('button');
   headerRight['aria-label'] = "close result list";
