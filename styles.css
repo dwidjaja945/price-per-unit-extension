@@ -1,0 +1,29 @@
+body {
+  margin: 0;
+  padding: 0;
+  width: 300px;
+}
+
+header {
+  padding: 10px;
+  background-color: #eee;
+}
+
+h2 {
+  margin: 0;
+}
+
+.body {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+button {
+  padding: 10px;
+  background-color: #185e18;
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.25);
+}
