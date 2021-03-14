@@ -249,16 +249,18 @@ function renderModal(searchResults) {
   applyStyles(modalHeader, {
     padding: '10px 15px',
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#eee',
   });
-  const headerContent = document.createElement('button');
-  headerContent.innerText = 'X';
-  headerContent.onclick = () => {
+  const headerLeft = document.createElement('h3');
+  headerLeft.innerText = "Please double check values!";
+  const headerRight = document.createElement('button');
+  headerRight.innerText = 'X';
+  headerRight.onclick = () => {
     document.body.removeChild(modal);
   };
-  modalHeader.appendChild(headerContent);
+  append(modalHeader).add(headerLeft, headerRight);
   const modalBody = document.createElement('div');
   applyStyles(modalBody, {
     padding: '10px',
@@ -289,8 +291,14 @@ function renderModal(searchResults) {
     const label = document.createElement('h4');
     label.innerText = `Unit: ${unit}`;
     append(label).to(modalBody);
-    modalBody.appendChild(unitList);
+    append(unitList).to(modalBody);
   });
+
+  if (!units.length) {
+    const notice = document.createElement('p');
+    notice.innerText = "No Results Found!";
+    append(modalBody).add(notice);
+  };
 
   append(document.body)
     .add(modal);
