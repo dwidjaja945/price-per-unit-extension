@@ -12,6 +12,5 @@ Known limitations:
 
 ## Steps to use
 1. Search for particular product
-2. Copy, paste, and run script in console.
-3. Depending on results, a confirmation might appear - approve or decline.
-4. This script should show a modal with results. No modal appears if there are no results.
+2. Depending on results, a confirmation might appear - approve or decline.
+3. This script should show a modal with results. No modal appears if there are no results.
