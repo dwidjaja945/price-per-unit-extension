@@ -191,7 +191,7 @@ var runSearch = () => {
     if (!pricePerUnit) { // sanity check
       pricePerUnit = (price / quantity);
     }
-    pricePerUnit = pricePerUnit.toFixed(3);
+    pricePerUnit = pricePerUnit;
 
     if (!unit) {
       const unitMatch = text.match(unitRegex);
@@ -233,7 +233,7 @@ var runSearch = () => {
     const array = unitGroups[group];
     unitGroups[group] = array.sort((a, b) => a.price - b.price);
     unitGroups[group] = unitGroups[group].map(group => {
-      const pricePerUnit = `$${group.price} per ${group.unit}`;
+      const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
       const output = [pricePerUnit, group.name];
       output['link'] = group.link;
       return output;
