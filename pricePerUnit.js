@@ -10,9 +10,14 @@ var PK = 'PK';
 
 // units
 // (oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz)
-var UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz))';
-var QUANTITY_REGEX = ' ?((pk)|(ct))';
-var MULTIPLE_PER_REGEX = '[0-9]* ?(\/|x) ?[0-9]*';
+var UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(ounce)|(gal)|(fl ?oz))';
+var PRICE_REGEX = '[0-9.]*';
+
+var quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9.]*${UNIT_REGEX}`, 'gim');
+var quantityRegex = new RegExp(`[0-9.]+${UNIT_REGEX}`, 'gi');
+var unitRegex = new RegExp(UNIT_REGEX, 'gi');
+var quantityMathRegex = new RegExp(`[0-9.]* ?[x\/-]+ ?[0-9.]*${UNIT_REGEX}`, 'gi');
+
 
 var AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
 var TARGET_SELECTOR = '[data-test="productCardBody"]';
@@ -82,12 +87,18 @@ var handleConversions = unitGroups => {
 };
 
 var parseQuantityString = string => {
+  if (!/[x\/]/.test(string)) {
+    const quantity = string.match(PRICE_REGEX);
+    if (quantity) {
+      return quantity;
+    }
+  }
   string = string.replace(/ /gm, '');
   let num1 = '';
   let num2 = '';
   let buildNum1 = true;
   for (let i = 0; i < string.length; i++) {
-    if (!isNaN(string[i])) {
+    if ((!isNaN(string[i]) && string[i] !== '.') || string[i] === '.') {
       if (buildNum1) {
         num1 += string[i];
       } else {
@@ -100,79 +111,109 @@ var parseQuantityString = string => {
   return [Number(num1), Number(num2)];
 };
 
-var parseQuantity = string => {
-  const [num1, num2] = parseQuantityString(string);
-  return num1 * num2;
-};
-
 var isRatio = string => {
   const [num1, num2] = parseQuantityString(string);
   return num1 + num2 === 100;
 };
 
+var getQuantityFromString = string => {
+  const cleaned = string
+    .replace(/ /g, '')
+    .replace(new RegExp(UNIT_REGEX, 'i'), '');
+  if (isRatio(cleaned)) return 1;
+  const [num1, num2] = parseQuantityString(cleaned);
+  if (num1 && num2) {
+    const output = num1 * num2;
+    return output;
+  }
+  if (num1 && !num2) return num1;
+  return 1;
+};
+
+var getUnitFromString = string => {
+  const unitMatch = string.match(UNIT_REGEX);
+  if (unitMatch) {
+    const [unit] = unitMatch;
+    return unit.replace(/ /gi, '');
+  }
+};
+
+var getPricePerUnit = string => {
+  const match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz))/gi);
+  if (match) {
+    const priceMatch = match[0].match(new RegExp(`${PRICE_REGEX}${UNIT_REGEX}`))
+    const { 0: unit, index } = priceMatch;
+    const price = Number(string.slice(0, index - 1));
+    return [price, unit];
+  }
+  return null;
+};
+
 var runSearch = () => {
   var cards = document.querySelectorAll(selector);
-  var matchRegex = new RegExp(`[0-9.]+${UNIT_REGEX}`, 'gi');
-  var unitRegex = new RegExp(UNIT_REGEX, 'gi');
-  var quantifierRegex = new RegExp(`[0-9.]+${QUANTITY_REGEX}`, 'i');
-  var multiplePerRegex = new RegExp(MULTIPLE_PER_REGEX, 'gm');
 
   var table = {};
   cards.forEach(card => {
     const { innerText: text } = card;
 
+    let productName;
+    let price;
+    let unit;
+    let pricePerUnit;
+    let quantity = 1;
+
     const linkEl = card.querySelector('a');
 
-    // x[unit]
-    const match = text.match(matchRegex);
-    // xx.xx
     const dollarMatch = text.match(/\$[0-9]+[.]?[0-9]{2}/m);
-    if (!match || !dollarMatch) return;
-    const { 0: _amount, index: amountIdx } = match;
-    // x[quantifier]
-    const quantifierMatch = text.match(quantifierRegex);
-    // x/y[unit] ex. 24/12 oz, 24 x 12 fl oz
-    const multiplePerMatch = text.match(multiplePerRegex);
-    let quantity = 1;
-    let quantityUnit = 'unit';
-    if (quantifierMatch) {
-      const [amount, _quantityUnit] = quantifierMatch;
-      quantity = Number(amount.replace(_quantityUnit, ''));
-      quantityUnit = _quantityUnit;
-    } else if (multiplePerMatch) {
-      let quantityString = multiplePerMatch.find(item => /[0-9]/.test(item));
-      // accommodate for syntax where lean/fat ratios
-      if (quantityString && !isRatio(quantityString)) {
-        quantityString = quantityString.replace(/ /gm, '');
-        quantity = parseQuantity(quantityString) || Number(_amount.replace(unitRegex, ''));
-      };
-    };
+    if (!dollarMatch) return;
+    const { 0: priceString } = dollarMatch;
+    price = Number(priceString.replace(/\$/gi, ''));
 
-    // [unit]
-    let [unit] = _amount.match(unitRegex);
-    unit = unit.replace(/ /g, '').toLowerCase();
-    // quantity already calculated via multiplePerMatch
-    // const amount = multiplePerMatch ? 1 : Number(_amount.replace(unitRegex, ''));
-    const amount = Number(_amount.replace(unitRegex, ''));
+    const quantityMatch = text.match(quantityMatchRegex);
+    if (!quantityMatch) return
+    let quantityString =
+      quantityMatch.find(string =>
+        quantityMathRegex.test(string) || quantityRegex.test(string)) ??
+      quantityMatch[0];
+    quantityString = quantityString.toLowerCase();
+    // check to see if site already provides price per unit
+    const currentPricePerUnit = getPricePerUnit(quantityString);
+    if (currentPricePerUnit) {
+      const [_price, _unit] = currentPricePerUnit;
+      price = _price;
+      unit = _unit;
+      pricePerUnit = price;
+    } else {
+      quantity = getQuantityFromString(quantityString);
+      unit = getUnitFromString(quantityString);
+      pricePerUnit = (price / quantity);
+    }
+    if (!pricePerUnit) { // sanity check
+      pricePerUnit = (price / quantity);
+    }
+    pricePerUnit = pricePerUnit.toFixed(3);
 
-    const [_price] = dollarMatch;
-    // xx.xx
-    const price = Number(_price.replace('$', ''));
-    const pricePerUnit = (price / (amount * quantity)).toFixed(3);
-    const originalName = text.slice(0, amountIdx);
-    let name = originalName;
+    if (!unit) {
+      const unitMatch = text.match(unitRegex);
+      if (!unitMatch) return;
+      const [rawUnit] = unitMatch;
+      unit = rawUnit.toLowerCase().replace(/ /gi, '');
+    }
+
+    productName = text.replace(priceString, '');
+    let name = productName;
     const nameMatch = name.match(/ - /);
     if (nameMatch) {
       const { index: seperatorIdx } = nameMatch
       name = name.slice(0, seperatorIdx);
     };
 
-    const product = `${name} ${quantity + quantityUnit}/${amount + unit}`;
+    const product = productName;
     const tableData = { price: pricePerUnit, unit, link: linkEl, product };
     if (table[name] === undefined) {
       table[name] = tableData;
     } else {
-      table[originalName] = tableData;
+      table[productName] = tableData;
     }
   });
 
