@@ -14,7 +14,7 @@
         "https://sayweee.com/*"
       ],
       "js": [
-        "./src/index.js"
+        "./src/pricePerUnit.js"
       ]
     }
   ],

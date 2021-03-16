@@ -1,32 +1,31 @@
-var OZ = 'oz';
-var OUNCE = 'ounce';
-var LB = 'lb';
-var POUND = 'pound';
-var CT = 'ct';
-var FL_OZ = 'floz';
-var GAL = 'gal';
+const OZ = 'oz';
+const OUNCE = 'ounce';
+const LB = 'lb';
+const POUND = 'pound';
+const CT = 'ct';
+const FL_OZ = 'floz';
+const GAL = 'gal';
 
-var PK = 'PK';
+const PK = 'PK';
 
 // units
 // (oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz)
-var UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(ounce)|(gal)|(fl ?oz))';
-var PRICE_REGEX = '[0-9.]*';
+const UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(ounce)|(gal)|(fl ?oz))';
+const PRICE_REGEX = '[0-9.]*';
 
-var quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9.]*${UNIT_REGEX}`, 'gim');
-var quantityRegex = new RegExp(`[0-9.]+${UNIT_REGEX}`, 'gi');
-var unitRegex = new RegExp(UNIT_REGEX, 'gi');
-var quantityMathRegex = new RegExp(`[0-9.]* ?[x\/-]+ ?[0-9.]*${UNIT_REGEX}`, 'gi');
+const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9.]*${UNIT_REGEX}`, 'gim');
+const quantityRegex = new RegExp(`[0-9.]+${UNIT_REGEX}`, 'gi');
+const unitRegex = new RegExp(UNIT_REGEX, 'gi');
+const quantityMathRegex = new RegExp(`[0-9.]* ?[x\/-]+ ?[0-9.]*${UNIT_REGEX}`, 'gi');
 
+const AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
+const TARGET_SELECTOR = '[data-test="productCardBody"]';
+const SHIPT_SELECTOR = '[data-test="ProductCard"]';
+const INSTACART_SELECTOR = "[data-radium='true'].item-card";
+const SAY_WEEE_SELECTOR = '.product-media';
 
-var AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
-var TARGET_SELECTOR = '[data-test="productCardBody"]';
-var SHIPT_SELECTOR = '[data-test="ProductCard"]';
-var INSTACART_SELECTOR = "[data-radium='true'].item-card";
-var SAY_WEEE_SELECTOR = '.product-media';
-
-var domain = document.location.hostname;
-var selector = (() => {
+const domain = document.location.hostname;
+const selector = (() => {
   switch (domain.toLowerCase()) {
     case 'www.target.com':
       return TARGET_SELECTOR;
@@ -41,10 +40,10 @@ var selector = (() => {
       return SAY_WEEE_SELECTOR;
     default:
       throw new Error(`Unhandled domain: ${domain}`);
-  };
+  }
 })();
 
-var getUnit = unit => {
+const getUnit = (unit) => {
   switch (unit) {
     case OZ:
     case OUNCE:
@@ -55,29 +54,29 @@ var getUnit = unit => {
     default:
       return unit;
     // throw new Error(`Unhandled unit: ${unit}`);
-  };
+  }
 };
 
-var checkFor = (unitGroups, unit) => Object.keys(unitGroups).some(group => group === unit)
+const checkFor = (unitGroups, unit) => Object.keys(unitGroups).some((group) => group === unit);
 
-var convertUnits = (unitGroups, from, to, conversionFactor) => {
+const convertUnits = (unitGroups, from, to, conversionFactor) => {
   const array = unitGroups[from];
   if (unitGroups[to] === undefined) unitGroups[to] = [];
-  array.forEach(oz => {
-    oz.price = oz.price * conversionFactor;
+  array.forEach((oz) => {
+    oz.price *= conversionFactor;
     oz.unit = to;
     unitGroups[to].push(oz);
-  })
+  });
   delete unitGroups[from];
 };
 
-var handleConversions = unitGroups => {
-  var hasOz = checkFor(unitGroups, OZ);
-  var hasFlOz = checkFor(unitGroups, FL_OZ);
+const handleConversions = (unitGroups) => {
+  const hasOz = checkFor(unitGroups, OZ);
+  const hasFlOz = checkFor(unitGroups, FL_OZ);
   if (hasOz) {
     if (confirm('Convert oz to lb?')) {
       convertUnits(unitGroups, OZ, LB, 16);
-    };
+    }
   }
   if (hasFlOz) {
     if (confirm('Convert fl oz to gallons?')) {
@@ -86,7 +85,7 @@ var handleConversions = unitGroups => {
   }
 };
 
-var parseQuantityString = string => {
+const parseQuantityString = (string) => {
   if (!/[x\/]/.test(string)) {
     const quantity = string.match(PRICE_REGEX);
     if (quantity) {
@@ -103,20 +102,20 @@ var parseQuantityString = string => {
         num1 += string[i];
       } else {
         num2 += string[i];
-      };
+      }
       continue;
     }
     buildNum1 = false;
-  };
+  }
   return [Number(num1), Number(num2)];
 };
 
-var isRatio = string => {
+const isRatio = (string) => {
   const [num1, num2] = parseQuantityString(string);
   return num1 + num2 === 100;
 };
 
-var getQuantityFromString = string => {
+const getQuantityFromString = (string) => {
   const cleaned = string
     .replace(/ /g, '')
     .replace(new RegExp(UNIT_REGEX, 'i'), '');
@@ -130,7 +129,7 @@ var getQuantityFromString = string => {
   return 1;
 };
 
-var getUnitFromString = string => {
+const getUnitFromString = (string) => {
   const unitMatch = string.match(UNIT_REGEX);
   if (unitMatch) {
     const [unit] = unitMatch;
@@ -138,10 +137,10 @@ var getUnitFromString = string => {
   }
 };
 
-var getPricePerUnit = string => {
+const getPricePerUnit = (string) => {
   const match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz))/gi);
   if (match) {
-    const priceMatch = match[0].match(new RegExp(`${PRICE_REGEX}${UNIT_REGEX}`))
+    const priceMatch = match[0].match(new RegExp(`${PRICE_REGEX}${UNIT_REGEX}`));
     const { 0: unit, index } = priceMatch;
     const price = Number(string.slice(0, index - 1));
     return [price, unit];
@@ -149,11 +148,11 @@ var getPricePerUnit = string => {
   return null;
 };
 
-var runSearch = () => {
-  var cards = document.querySelectorAll(selector);
+const runSearch = () => {
+  const cards = document.querySelectorAll(selector);
 
-  var table = {};
-  cards.forEach(card => {
+  const table = {};
+  cards.forEach((card) => {
     const { innerText: text } = card;
 
     let productName;
@@ -170,11 +169,9 @@ var runSearch = () => {
     price = Number(priceString.replace(/\$/gi, ''));
 
     const quantityMatch = text.match(quantityMatchRegex);
-    if (!quantityMatch) return
-    let quantityString =
-      quantityMatch.find(string =>
-        quantityMathRegex.test(string) || quantityRegex.test(string)) ??
-      quantityMatch[0];
+    if (!quantityMatch) return;
+    let quantityString = quantityMatch.find((string) => quantityMathRegex.test(string) || quantityRegex.test(string))
+      ?? quantityMatch[0];
     quantityString = quantityString.toLowerCase();
     // check to see if site already provides price per unit
     const currentPricePerUnit = getPricePerUnit(quantityString);
@@ -204,12 +201,14 @@ var runSearch = () => {
     let name = productName;
     const nameMatch = name.match(/ - /);
     if (nameMatch) {
-      const { index: seperatorIdx } = nameMatch
+      const { index: seperatorIdx } = nameMatch;
       name = name.slice(0, seperatorIdx);
-    };
+    }
 
     const product = productName;
-    const tableData = { price: pricePerUnit, unit, link: linkEl, product };
+    const tableData = {
+      price: pricePerUnit, unit, link: linkEl, product,
+    };
     if (table[name] === undefined) {
       table[name] = tableData;
     } else {
@@ -217,42 +216,45 @@ var runSearch = () => {
     }
   });
 
-  var unitGroups = {};
-  Object.keys(table).forEach(name => {
-    const { price, unit: _unit, link, product } = table[name];
-    let unit = getUnit(_unit);
+  const unitGroups = {};
+  Object.keys(table).forEach((name) => {
+    const {
+      price, unit: _unit, link, product,
+    } = table[name];
+    const unit = getUnit(_unit);
     if (unitGroups[unit] === undefined) {
       unitGroups[unit] = [];
-    };
-    unitGroups[unit].push({ name: product, price, unit, link });
+    }
+    unitGroups[unit].push({
+      name: product, price, unit, link,
+    });
   });
 
   handleConversions(unitGroups);
 
-  Object.keys(unitGroups).forEach(group => {
+  Object.keys(unitGroups).forEach((group) => {
     const array = unitGroups[group];
     unitGroups[group] = array.sort((a, b) => a.price - b.price);
-    unitGroups[group] = unitGroups[group].map(group => {
+    unitGroups[group] = unitGroups[group].map((group) => {
       const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
       const output = [pricePerUnit, group.name];
-      output['link'] = group.link;
+      output.link = group.link;
       return output;
     });
   });
   return unitGroups;
 };
 
-
 // ==== Modal Logic Start ====
-var applyStyles = (node, styles) => {
+const applyStyles = (node, styles) => {
   for (style in styles) {
     node.style[style] = styles[style];
-  };
+  }
 };
 
-var removeModal = () => {
+const removeModal = () => {
   const oldModal = document.querySelector('#search_results_id');
-  if (oldModal) { document.body.removeChild(oldModal) };
+  if (oldModal) { document.body.removeChild(oldModal); }
 };
 
 function renderModal(searchResults) {
@@ -284,7 +286,7 @@ function renderModal(searchResults) {
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 0 17px 3px rgba(0, 0, 0, 0.25)'
+    boxShadow: '0 0 17px 3px rgba(0, 0, 0, 0.25)',
   });
   const modalHeader = document.createElement('header');
   applyStyles(modalHeader, {
@@ -295,9 +297,9 @@ function renderModal(searchResults) {
     backgroundColor: '#eee',
   });
   const headerLeft = document.createElement('h4');
-  headerLeft.innerText = "Please double check values!";
+  headerLeft.innerText = 'Please double check values!';
   const headerRight = document.createElement('button');
-  headerRight['aria-label'] = "close result list";
+  headerRight['aria-label'] = 'close result list';
   headerRight.innerText = 'X';
   headerRight.onclick = () => {
     document.body.removeChild(modal);
@@ -307,12 +309,12 @@ function renderModal(searchResults) {
   applyStyles(modalBody, {
     padding: '10px',
     overflow: 'scroll',
-  })
+  });
   const units = Object.keys(searchResults);
-  units.forEach(unit => {
+  units.forEach((unit) => {
     const unitList = document.createElement('ul');
     const list = searchResults[unit];
-    list.forEach(result => {
+    list.forEach((result) => {
       const listItem = document.createElement('li');
       applyStyles(listItem, {
         padding: '5px',
@@ -338,9 +340,9 @@ function renderModal(searchResults) {
 
   if (!units.length) {
     const notice = document.createElement('p');
-    notice.innerText = "No Results Found!";
+    notice.innerText = 'No Results Found!';
     append(modalBody).add(notice);
-  };
+  }
 
   append(document.body)
     .add(modal);
@@ -348,28 +350,28 @@ function renderModal(searchResults) {
     .add(modalContent);
   append(modalContent)
     .add(modalHeader, modalBody);
-};
+}
 
 function append(...nodes) {
   const output = {
-    to: targetNode => {
-      nodes.forEach(node => {
+    to: (targetNode) => {
+      nodes.forEach((node) => {
         targetNode.appendChild(node);
       });
       return output;
     },
     add: (...childNodes) => {
       if (nodes.length > 1) {
-        throw new Error(`You can not add to multiple nodes`);
-      };
-      childNodes.forEach(childNode => {
+        throw new Error('You can not add to multiple nodes');
+      }
+      childNodes.forEach((childNode) => {
         nodes[0].appendChild(childNode);
       });
       return output;
-    }
-  }
+    },
+  };
   return output;
-};
+}
 // ==== Modal Logic End ====
 
 // actual work is run here
@@ -384,19 +386,20 @@ function calculate() {
         setTimeout(() => {
           const searchResults = runSearch();
           if (Object.keys(searchResults).length) {
-            console.log("Price per unit. Lower is better. \n", searchResults);
-            renderModal(searchResults);
+            console.log('Price per unit. Lower is better. \n', searchResults);
+            // renderModal(searchResults);
             return searchResults;
-          };
+          }
           console.log('No results');
         }, 0);
       }, 0);
-    };
+    }
     i++;
     window.scrollBy(0, document.body.scrollHeight);
   }, 100);
-};
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  calculate();
+  calculate().then((resp) => sendResponse(resp));
+  return true;
 });

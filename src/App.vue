@@ -20,11 +20,18 @@
         </blockquote>
       </div>
       <div class="understand-box">
-        <input id="understand" type="checkbox" v-model="isUnderstood"/>
+        <input id="understand" type="checkbox" v-model="isUnderstood" />
         <label for="understand">Got it!</label>
       </div>
       <div class="body">
-        <button :disabled="!isUnderstood" type="button" id="Calculate">LET'S GO!</button>
+        <button
+          :disabled="!isUnderstood"
+          type="button"
+          id="Calculate"
+          @click="runSearch"
+        >
+          LET'S GO!
+        </button>
       </div>
     </main>
 
@@ -32,21 +39,43 @@
 </template>
 
 <script>
+import runSearch from './runSearch';
+
+const USER_UNDERSTANDS = 'userUnderstands';
 
 export default {
-  data() {
-    return {
-      isUnderstood: false,
-    };
+  computed: {
+    isUnderstood() {
+      let localItem = localStorage.getItem(USER_UNDERSTANDS);
+      if (localItem) {
+        localItem = JSON.parse(localItem);
+        const { expires } = localItem;
+        const expireDate = new Date(expires);
+        if (expireDate > new Date()) {
+          return true;
+        }
+      }
+      return false;
+    },
   },
   watch: {
     isUnderstood() {
-      console.log(this.isUnderstood);
-      debugger;
+      if (this.isUnderstood) {
+        let expires = new Date();
+        expires = expires.setHours(expires.getHours() + 1);
+        localStorage.setItem(USER_UNDERSTANDS, JSON.stringify({
+          userUnderstands: true,
+          expires,
+        }));
+      } else {
+        localStorage.removeItem(USER_UNDERSTANDS);
+      }
     },
   },
   methods: {
-
+    runSearch() {
+      runSearch();
+    },
   },
 };
 </script>
