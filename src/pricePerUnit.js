@@ -237,7 +237,7 @@ const runSearch = () => {
     unitGroups[group] = array.sort((a, b) => a.price - b.price);
     unitGroups[group] = unitGroups[group].map((group) => {
       const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
-      const output = [pricePerUnit, group.name];
+      const output = [pricePerUnit, group.name, group.link.href];
       output.link = group.link;
       return output;
     });
@@ -383,18 +383,23 @@ function calculate() {
       if (i === limit) {
         clearInterval(interval);
         setTimeout(() => {
-          window.scrollTo(0, 0);
-          setTimeout(() => {
-            const searchResults = runSearch();
-            if (Object.keys(searchResults).length) {
-              console.log('Price per unit. Lower is better. \n', searchResults);
-              console.log('searchResults: ', searchResults);
-              // renderModal(searchResults);
-              resolve(searchResults);
-              return searchResults;
-            }
-            console.log('No results');
-          }, 0);
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+          });
+          window.requestAnimationFrame(() => {
+            setTimeout(() => {
+              const searchResults = runSearch();
+              if (Object.keys(searchResults).length) {
+                console.log('Price per unit. Lower is better. \n', searchResults);
+                console.log('searchResults: ', searchResults);
+                renderModal(searchResults);
+                resolve(searchResults);
+                return searchResults;
+              }
+              console.log('No results');
+            }, 0);
+          });
         }, 0);
       }
       i++;
@@ -403,9 +408,23 @@ function calculate() {
   });
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  calculate().then(resp => {
-    sendResponse(resp);
-  });
+const reduceRequest = (request, sender, sendResponse) => {
+  switch (request.type) {
+    case 'runSearch':
+      calculate().then(resp => {
+        sendResponse(resp);
+      });
+      break;
+    case 'openUrl': {
+      const { url } = request;
+      console.log('url: ', url);
+      window.open(url, '_blank');
+      break;
+    }
+    default:
+      throw new Error(`unhandled type: ${request.type}`);
+  }
   return true;
-});
+};
+
+chrome.runtime.onMessage.addListener(reduceRequest);
