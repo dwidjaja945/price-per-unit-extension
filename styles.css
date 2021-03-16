@@ -4,7 +4,11 @@ body {
   width: 300px;
 }
 
-header {
+body.results {
+  width: 600px;
+}
+
+/* header {
   padding: 10px;
   background-color: #eee;
 }
@@ -37,4 +41,4 @@ button {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
+} */

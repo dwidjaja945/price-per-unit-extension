@@ -376,30 +376,36 @@ function append(...nodes) {
 
 // actual work is run here
 function calculate() {
-  const limit = 10;
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i === limit) {
-      clearInterval(interval);
-      setTimeout(() => {
-        window.scrollTo(0, 0);
+  return new Promise((resolve, reject) => {
+    const limit = 10;
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i === limit) {
+        clearInterval(interval);
         setTimeout(() => {
-          const searchResults = runSearch();
-          if (Object.keys(searchResults).length) {
-            console.log('Price per unit. Lower is better. \n', searchResults);
-            // renderModal(searchResults);
-            return searchResults;
-          }
-          console.log('No results');
+          window.scrollTo(0, 0);
+          setTimeout(() => {
+            const searchResults = runSearch();
+            if (Object.keys(searchResults).length) {
+              console.log('Price per unit. Lower is better. \n', searchResults);
+              console.log('searchResults: ', searchResults);
+              // renderModal(searchResults);
+              resolve(searchResults);
+              return searchResults;
+            }
+            console.log('No results');
+          }, 0);
         }, 0);
-      }, 0);
-    }
-    i++;
-    window.scrollBy(0, document.body.scrollHeight);
-  }, 100);
+      }
+      i++;
+      window.scrollBy(0, document.body.scrollHeight);
+    }, 100);
+  });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  calculate().then((resp) => sendResponse(resp));
+  calculate().then(resp => {
+    sendResponse(resp);
+  });
   return true;
 });

@@ -1,10 +1,11 @@
-import Vue from 'vue';
-
-export default () => {
+export default () => new Promise((resolve, reject) => {
   chrome.tabs.query({
     currentWindow: true,
     active: true,
   }, (tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, null, displayData);
+    chrome.tabs.sendMessage(tabs[0].id, null, (resp) => {
+      resolve(resp);
+      return resp;
+    });
   });
-};
+});
