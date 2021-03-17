@@ -11,7 +11,7 @@
       </div>
       <div class="result-container">
         <div class="unit-container" :key="unit" v-for="unit in units">
-          <b v-if="results[unit]?.length">Unit: {{unit}}</b>
+          <b v-if="results[unit] && results[unit].length">Unit: {{unit}}</b>
           <ul>
             <li
               :key="item"
@@ -93,8 +93,7 @@ header {
   }
 }
 main {
-  padding: 1rem;
-  padding-bottom: 0;
+  padding-top: 1rem;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -118,6 +117,7 @@ main {
 
 .result-container {
   overflow: scroll;
+  padding: 0 1rem;
 }
 
 .unit-container:last-of-type {
