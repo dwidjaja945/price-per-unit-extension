@@ -407,6 +407,8 @@ function calculate() {
                 return searchResults;
               }
               console.log('No results');
+              resolve(null);
+              return null;
             }, 0);
           });
         }, 0);
