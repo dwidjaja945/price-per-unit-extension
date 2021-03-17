@@ -6,18 +6,23 @@
     </header>
 
     <main>
-      <div :key="unit" v-for="unit in units">
-        <b>Unit: {{unit}}</b>
-        <ul>
-          <li
-            :key="item"
-            v-for="[price, item, link] in results[unit]"
-            class="list-item"
-            @click="openPage(link)"
-          >
-            <b>{{price}}: </b><span>{{item}}</span>
-          </li>
-        </ul>
+      <div class="search-container">
+        <input type="text" v-model="searchText" placeholder="Search For...">
+      </div>
+      <div class="result-container">
+        <div class="unit-container" :key="unit" v-for="unit in units">
+          <b v-if="results[unit]?.length">Unit: {{unit}}</b>
+          <ul>
+            <li
+              :key="item"
+              v-for="[price, item, link] in results[unit]"
+              class="list-item"
+              @click="openPage(link)"
+            >
+              <b>{{price}}: </b><span>{{item}}</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </main>
 
@@ -38,7 +43,13 @@ export default {
   data() {
     return {
       units: [],
+      searchText: '',
     };
+  },
+  watch: {
+    searchText() {
+      this.$emit('handleSearch', this.searchText);
+    },
   },
   created() {
     this.units = Object.keys(this.results);
@@ -83,9 +94,36 @@ header {
 }
 main {
   padding: 1rem;
+  padding-bottom: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  input {
+    width: 50%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 1rem;
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.result-container {
   overflow: scroll;
 }
+
+.unit-container:last-of-type {
+  padding-bottom: 1rem;
+}
+
 ul {
   padding: 0;
   margin: 0;

@@ -45,7 +45,12 @@
     </div>
 
     <div v-if="results">
-      <SearchResults :results="results" @runAgain="runSearch()" @clearResults="clearResults()"/>
+      <SearchResults
+        :results="filteredResults"
+        @handleSearch="handleSearch"
+        @runAgain="runSearch()"
+        @clearResults="clearResults()"
+      />
     </div>
   </div>
 </template>
@@ -66,6 +71,7 @@ export default {
     return {
       isUnderstood: false,
       results: null,
+      filteredResults: null,
       hasResults: false,
       attemptedSearch: false,
     };
@@ -129,6 +135,8 @@ export default {
         const { results, expires } = JSON.parse(cachedItem);
         if (new Date(expires) > new Date()) {
           this.results = results;
+          this.filteredResults = results;
+          this.hasResults = true;
           this.expireTime = expires;
           return;
         }
@@ -147,13 +155,38 @@ export default {
         });
         localStorage.setItem(CACHED_RESULTS, stringified);
         this.results = resp;
+        this.filteredResults = resp;
       }
       this.attemptedSearch = true;
       this.hasResults = Boolean(resp);
     },
+    handleSearch(searchText) {
+      if (!this.hasResults) return;
+      if (!searchText.length) {
+        this.filteredResults = this.results;
+        return;
+      }
+      const newFilteredResults = {};
+      const units = Object.keys(this.results);
+      units.forEach(unit => {
+        console.log('this.results[unit]: ', this.results[unit]);
+        this.results[unit].forEach(product => {
+          const [, name] = product;
+          if (name.toLowerCase().includes(searchText.toLowerCase())) {
+            if (newFilteredResults[unit] === undefined) {
+              newFilteredResults[unit] = [];
+            }
+            newFilteredResults[unit].push(product);
+          }
+        });
+      });
+      console.log('newFilteredResults: ', newFilteredResults);
+      this.filteredResults = newFilteredResults;
+    },
     clearResults() {
       localStorage.removeItem(CACHED_RESULTS);
       this.results = null;
+      this.filteredResults = null;
       this.hasResults = false;
       this.attemptedSearch = false;
     },
