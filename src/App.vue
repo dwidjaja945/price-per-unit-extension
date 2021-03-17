@@ -24,6 +24,13 @@
           <input id="understand" type="checkbox" v-model="isUnderstood" />
           <label for="understand">Got it!</label>
         </div>
+        <div v-if="hasResults && attemptedSearch">
+          <p>We couldn't find any results... Try again!</p>
+          <p>
+            If it still does not work, try refreshing the browser, otherwise,
+            uh oh! That's a bug!
+          </p>
+        </div>
         <div class="body">
           <button
             :disabled="!isUnderstood"
@@ -59,6 +66,8 @@ export default {
     return {
       isUnderstood: false,
       results: null,
+      hasResults: false,
+      attemptedSearch: false,
     };
   },
   created() {
@@ -139,10 +148,14 @@ export default {
         localStorage.setItem(CACHED_RESULTS, stringified);
         this.results = resp;
       }
+      this.attemptedSearch = true;
+      this.hasResults = Boolean(resp);
     },
     clearResults() {
       localStorage.removeItem(CACHED_RESULTS);
       this.results = null;
+      this.hasResults = false;
+      this.attemptedSearch = false;
     },
   },
 };
@@ -177,6 +190,10 @@ button:disabled {
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
   color: #2c3e50;
+}
+
+main {
+  padding: 0 30px;
 }
 
 header {

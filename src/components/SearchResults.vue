@@ -69,6 +69,17 @@ header {
   display: flex;
   justify-content: space-between;
   padding: 0.75rem;
+  position: relative;
+  &::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 24px;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0), white);
+  }
 }
 main {
   padding: 1rem;
@@ -90,5 +101,6 @@ li {
 }
 footer {
   padding: 0.75rem;
+  box-shadow: 0 0px 12px 1px rgba(0, 0, 0, 0.25);
 }
 </style>
