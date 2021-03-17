@@ -5,12 +5,15 @@ const POUND = 'pound';
 const CT = 'ct';
 const FL_OZ = 'floz';
 const GAL = 'gal';
+const L = 'l';
+const LITER = 'liter';
+const ML = 'ml';
 
 const PK = 'PK';
 
 // units
 // (oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz)
-const UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(ounce)|(gal)|(fl ?oz))';
+const UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(ounce)|(gal)|(fl ?oz)|(l(iter)?)|(ml))';
 const PRICE_REGEX = '[0-9.]*';
 
 const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9.]*${UNIT_REGEX}`, 'gim');
@@ -51,6 +54,9 @@ const getUnit = (unit) => {
     case LB:
     case POUND:
       return LB;
+    case L:
+    case LITER:
+      return LITER;
     default:
       return unit;
     // throw new Error(`Unhandled unit: ${unit}`);
@@ -71,16 +77,19 @@ const convertUnits = (unitGroups, from, to, conversionFactor) => {
 };
 
 const handleConversions = (unitGroups) => {
-  const hasOz = checkFor(unitGroups, OZ);
-  const hasFlOz = checkFor(unitGroups, FL_OZ);
-  if (hasOz) {
+  if (checkFor(unitGroups, OZ)) {
     if (confirm('Convert oz to lb?')) {
       convertUnits(unitGroups, OZ, LB, 16);
     }
   }
-  if (hasFlOz) {
+  if (checkFor(unitGroups, FL_OZ)) {
     if (confirm('Convert fl oz to gallons?')) {
       convertUnits(unitGroups, FL_OZ, GAL, 128);
+    }
+  }
+  if (checkFor(unitGroups, ML)) {
+    if (confirm('Convert ml to liters?')) {
+      convertUnits(unitGroups, ML, LITER, 1000);
     }
   }
 };
