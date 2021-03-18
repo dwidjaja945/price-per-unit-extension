@@ -11,6 +11,8 @@
         "https://www.amazon.com/*",
         "https://shop.shipt.com/*",
         "https://sameday.costco.com/*",
+        "https://instacart.com/*",
+        "https://www.instacart.com/*",
         "https://sayweee.com/*"
       ],
       "js": [
