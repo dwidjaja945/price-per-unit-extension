@@ -53,7 +53,6 @@ export default {
   },
   created() {
     this.units = Object.keys(this.results);
-    console.log(this.results[this.units[0]][0]);
   },
   methods: {
     clearResults() {

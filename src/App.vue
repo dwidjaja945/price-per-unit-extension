@@ -166,7 +166,6 @@ export default {
       const newFilteredResults = {};
       const units = Object.keys(this.results);
       units.forEach(unit => {
-        console.log('this.results[unit]: ', this.results[unit]);
         this.results[unit].forEach(product => {
           const [, name] = product;
           if (name.toLowerCase().includes(searchText.toLowerCase())) {
@@ -177,7 +176,6 @@ export default {
           }
         });
       });
-      console.log('newFilteredResults: ', newFilteredResults);
       this.filteredResults = newFilteredResults;
     },
     clearResults() {
