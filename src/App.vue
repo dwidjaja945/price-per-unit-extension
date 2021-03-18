@@ -24,7 +24,7 @@
           <input id="understand" type="checkbox" v-model="isUnderstood" />
           <label for="understand">Got it!</label>
         </div>
-        <div v-if="hasResults && attemptedSearch">
+        <div v-if="attemptedSearch && !results">
           <p>We couldn't find any results... Try again!</p>
           <p>
             If it still does not work, try refreshing the browser, otherwise,
@@ -72,7 +72,6 @@ export default {
       isUnderstood: false,
       results: null,
       filteredResults: null,
-      hasResults: false,
       attemptedSearch: false,
     };
   },
@@ -136,7 +135,6 @@ export default {
         if (new Date(expires) > new Date()) {
           this.results = results;
           this.filteredResults = results;
-          this.hasResults = true;
           this.expireTime = expires;
           return;
         }
@@ -158,10 +156,9 @@ export default {
         this.filteredResults = resp;
       }
       this.attemptedSearch = true;
-      this.hasResults = Boolean(resp);
     },
     handleSearch(searchText) {
-      if (!this.hasResults) return;
+      if (!this.results) return;
       if (!searchText.length) {
         this.filteredResults = this.results;
         return;
@@ -187,7 +184,6 @@ export default {
       localStorage.removeItem(CACHED_RESULTS);
       this.results = null;
       this.filteredResults = null;
-      this.hasResults = false;
       this.attemptedSearch = false;
     },
   },
