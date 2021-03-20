@@ -44,12 +44,13 @@
       </main>
     </div>
 
-    <div v-if="results">
+    <div v-else>
       <SearchResults
         :results="filteredResults"
+        @handleSort="handleSort"
         @handleSearch="handleSearch"
-        @runAgain="runSearch()"
-        @clearResults="clearResults()"
+        @runAgain="runSearch"
+        @clearResults="clearResults"
       />
     </div>
   </div>
@@ -73,6 +74,7 @@ export default {
       results: null,
       filteredResults: null,
       attemptedSearch: false,
+      expireTime: null,
     };
   },
   created() {
@@ -80,12 +82,14 @@ export default {
     this.getInitialResults();
   },
   updated() {
-    this.$refs.poller = setInterval(() => {
-      if (new Date(this.expireTime) < new Date()) {
-        clearInterval(this.$refs.poller);
-        this.clearResults();
-      }
-    }, 3000);
+    if (this.$refs.poller === undefined) {
+      this.$refs.poller = setInterval(() => {
+        if (new Date(this.expireTime) < new Date()) {
+          clearInterval(this.$refs.poller);
+          this.clearResults();
+        }
+      }, 3000);
+    }
   },
   beforeUnmount() {
     if (this.$refs.poller) {
@@ -116,17 +120,13 @@ export default {
   },
   methods: {
     getInitialUnderstood() {
-      let localItem = localStorage.getItem(USER_UNDERSTANDS);
+      const localItem = localStorage.getItem(USER_UNDERSTANDS);
       if (localItem) {
-        localItem = JSON.parse(localItem);
-        const { expires } = localItem;
-        const expireDate = new Date(expires);
-        if (expireDate > new Date()) {
-          this.isUnderstood = true;
-        }
-      } else {
-        this.isUnderstood = false;
+        const { expires } = JSON.parse(localItem);
+        this.isUnderstood = new Date(expires) > new Date();
+        return;
       }
+      this.isUnderstood = false;
     },
     getInitialResults() {
       const cachedItem = localStorage.getItem(CACHED_RESULTS);
@@ -156,6 +156,22 @@ export default {
         this.filteredResults = resp;
       }
       this.attemptedSearch = true;
+    },
+    handleSort(isDecending = true) {
+      const replaceRegex = /[ $a-z]/gim;
+      const units = Object.keys(this.results);
+      const newResults = {};
+      units.forEach(unit => {
+        newResults[unit] = this.results[unit].sort((a, b) => {
+          const [first] = a;
+          const [second] = b;
+          const firstNumber = Number(first.replace(replaceRegex, ''));
+          const secondNumber = Number(second.replace(replaceRegex, ''));
+          if (isDecending) return secondNumber - firstNumber;
+          return firstNumber - secondNumber;
+        });
+      });
+      this.filteredResults = newResults;
     },
     handleSearch(searchText) {
       if (!this.results) return;
@@ -190,17 +206,25 @@ export default {
 
 // global styling
 <style lang="scss">
-
+@import "@/styles/variables.scss";
 h2 {
   margin: 0;
 }
 button {
   padding: 10px;
-  background-color: #185e18;
+  background-color: $primary;
   color: white;
   border: none;
   cursor: pointer;
   box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.25);
+  transition: background-color 0.2s ease-in-out;
+  &:hover {
+    background-color: darken($primary, 5%);
+  }
+  &:active {
+    background-color: lighten($primary, 5%);
+    outline: none;
+  }
 }
 
 button:disabled {
@@ -211,6 +235,7 @@ button:disabled {
 
 // scoped styling
 <style lang="scss" scoped>
+@import "@/styles/variables.scss";
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -225,7 +250,7 @@ main {
 
 header {
   padding: 10px;
-  background-color: #eee;
+  background-color: $gray;
 }
 
 .understand-box {

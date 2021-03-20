@@ -419,7 +419,7 @@ function calculate() {
   });
 }
 
-const reduceRequest = (request, sender, sendResponse) => {
+const reduceRequest = async (request, sender, sendResponse) => {
   switch (request.type) {
     case 'runSearch':
       calculate().then(resp => {
@@ -428,7 +428,6 @@ const reduceRequest = (request, sender, sendResponse) => {
       break;
     case 'openUrl': {
       const { url } = request;
-      console.log('url: ', url);
       window.open(url, '_blank');
       break;
     }

@@ -2,16 +2,25 @@
   <div class="search-results-root">
     <header>
       <h2>Please make sure to double check values!</h2>
-      <button class="clear" @click="clearResults()">Clear</button>
+      <button class="clear" @click="clearResults()">CLEAR</button>
     </header>
 
     <main>
       <div class="search-container">
-        <input type="text" v-model="searchText" placeholder="Search For...">
+        <form>
+          <label for="sort-order" aria-hidden="true" v-show="false">Sort Order</label>
+          <select name="sort-order" v-model="sortOrder">
+            <option :value="ASCENDING">Low - High</option>
+            <option :value="DECENDING">High - Low</option>
+          </select>
+        </form>
+        <div>
+          <input type="text" v-model="searchText" placeholder="Search For...">
+        </div>
       </div>
       <div class="result-container">
-        <div class="unit-container" :key="unit" v-for="unit in units">
-          <b v-if="results[unit] && results[unit].length">Unit: {{unit}}</b>
+        <div class="unit-container" :key="unit" v-for="(value, unit) in results">
+          <b>Unit: {{unit}}</b>
           <ul>
             <li
               :key="item"
@@ -19,7 +28,8 @@
               class="list-item"
               @click="openPage(link)"
             >
-              <b>{{price}}: </b><span>{{item}}</span>
+              <b>{{price}}: </b>
+              <span>{{item}}</span>
             </li>
           </ul>
         </div>
@@ -27,7 +37,7 @@
     </main>
 
     <footer>
-      <button @click="$emit('runAgain')">Run Again</button>
+      <button @click="$emit('runAgain')">RUN AGAIN</button>
     </footer>
 
   </div>
@@ -36,23 +46,34 @@
 <script>
 import { openPage } from '@/browserUtils';
 
+const ASCENDING = 'acending';
+const DECENDING = 'decending';
+
 export default {
   props: {
     results: Object,
   },
+  computed: {
+    ASCENDING() {
+      return ASCENDING;
+    },
+    DECENDING() {
+      return DECENDING;
+    },
+  },
   data() {
     return {
-      units: [],
       searchText: '',
+      sortOrder: ASCENDING,
     };
   },
   watch: {
     searchText() {
       this.$emit('handleSearch', this.searchText);
     },
-  },
-  created() {
-    this.units = Object.keys(this.results);
+    sortOrder() {
+      this.$emit('handleSort', this.sortOrder === DECENDING);
+    },
   },
   methods: {
     clearResults() {
@@ -64,14 +85,22 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "@/styles/variables.scss";
 
 .search-results-root {
-  height: 35rem;
+  min-height: 35rem;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
 .clear {
-  background-color: #a31616;
+  background-color: $error;
+  &:hover {
+    background-color: darken($error, 5%);
+  }
+  &:active {
+    background-color: lighten($error, 5%);
+  }
 }
 
 header {
@@ -80,16 +109,6 @@ header {
   justify-content: space-between;
   padding: 0.75rem;
   position: relative;
-  &::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    height: 24px;
-    background: linear-gradient(0deg, rgba(255, 255, 255, 0), white);
-  }
 }
 main {
   padding-top: 1rem;
@@ -100,17 +119,37 @@ main {
 }
 
 .search-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr;
   align-items: center;
-  justify-content: center;
   margin-bottom: 1rem;
+  position: relative;
+  > * {
+    display: flex;
+    justify-content: center;
+  }
+  select {
+    padding: 5px 10px;
+    border-radius: 0.4rem;
+    cursor: pointer;
+  }
   input {
-    width: 50%;
+    width: 75%;
     padding: 0.5rem 0.75rem;
     border-radius: 1rem;
     &:focus {
       outline: none;
     }
+  }
+  &::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 24px;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0), white);
   }
 }
 

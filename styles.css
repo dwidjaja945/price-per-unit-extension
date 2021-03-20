@@ -6,7 +6,8 @@ body {
 }
 
 body.results {
-  width: 600px;
+  min-width: 600px;
+  width: 100%;
 }
 
 /* header {
