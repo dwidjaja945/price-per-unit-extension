@@ -47,8 +47,10 @@
     <div v-else>
       <SearchResults
         :results="filteredResults"
+        :units="Object.keys(results) || []"
         @handleSort="handleSort"
         @handleSearch="handleSearch"
+        @filterUnits="filterUnits"
         @runAgain="runSearch"
         @clearResults="clearResults"
       />
@@ -193,6 +195,18 @@ export default {
             newFilteredResults[unit].push(product);
           }
         });
+      });
+      this.filteredResults = newFilteredResults;
+    },
+    filterUnits(units) {
+      if (!this.results) return;
+      const unitsToDelete = { ...this.results };
+      units.forEach(unit => {
+        delete unitsToDelete[unit];
+      });
+      const newFilteredResults = { ...this.results };
+      Object.keys(unitsToDelete).forEach(unit => {
+        delete newFilteredResults[unit];
       });
       this.filteredResults = newFilteredResults;
     },

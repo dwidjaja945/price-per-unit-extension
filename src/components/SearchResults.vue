@@ -16,8 +16,25 @@
         <div>
           <input type="text" v-model="searchText" placeholder="Search For...">
         </div>
+        <div class="selected-units-container">
+          <button type="button" @click="toggleShowUnits()">Show Units</button>
+          <div class="selected-units-popover" v-if="showUnitPopover">
+            <ul>
+              <li :key="`select-units-${unit}`" v-for="unit of units">
+                <input
+                  :id="`selected-unit-${unit}`"
+                  type="checkbox" :checked="selectedUnits.has(unit)"
+                  @change="toggleUnit(unit)"
+                />
+                <label :for="`selected-unit-${unit}`">
+                  {{unit}}
+                </label>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div class="result-container">
+      <div class="result-container" v-if="Object.keys(results).length > 0">
         <div class="unit-container" :key="unit" v-for="(value, unit) in results">
           <b>Unit: {{unit}}</b>
           <ul>
@@ -32,6 +49,9 @@
             </li>
           </ul>
         </div>
+      </div>
+      <div v-else class="no-results">
+        <h3>Sorry, we couldn&apos;t find any results!</h3>
       </div>
     </main>
 
@@ -48,10 +68,12 @@ import { openPage } from '@/browserUtils';
 const ASCENDING = 'acending';
 const DECENDING = 'decending';
 const CLEAR_RESULTS = 'clearResults';
+const FILTER_UNITS = 'filterUnits';
 
 export default {
   props: {
     results: Object,
+    units: Array,
   },
   computed: {
     ASCENDING() {
@@ -65,6 +87,8 @@ export default {
     return {
       searchText: '',
       sortOrder: ASCENDING,
+      selectedUnits: new Set(Object.keys(this.results)),
+      showUnitPopover: false,
     };
   },
   unmounted() {
@@ -79,6 +103,17 @@ export default {
     },
   },
   methods: {
+    toggleShowUnits() {
+      this.showUnitPopover = !this.showUnitPopover;
+    },
+    toggleUnit(unit) {
+      if (this.selectedUnits.has(unit)) {
+        this.selectedUnits.delete(unit);
+      } else {
+        this.selectedUnits.add(unit);
+      }
+      this.$emit(FILTER_UNITS, this.selectedUnits);
+    },
     clearResults() {
       this.$emit(CLEAR_RESULTS);
       window.close();
@@ -157,6 +192,38 @@ main {
   }
 }
 
+.selected-units-container {
+  position: relative;
+}
+
+.selected-units-popover {
+  position: absolute;
+  z-index: 1;
+  background-color: white;
+  top: 100%;
+  left: 0;
+  right: 0;
+  min-height: 100px;
+  box-shadow: 0 0 7px 2px rgba(0, 0, 0, 0.25);
+  ul {
+    list-style-type: none;
+  }
+  li {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid $gray;
+    &:last-of-type {
+      border-bottom: none;
+    }
+    input {
+      width: unset;
+      margin-right: 10px;
+    }
+  }
+}
+
 .result-container {
   overflow: scroll;
   padding: 0 1rem;
@@ -178,6 +245,10 @@ li {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.no-results {
+  padding: 1rem 2rem;
 }
 footer {
   display: flex;
