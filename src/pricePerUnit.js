@@ -9,14 +9,13 @@ const L = 'l';
 const LITER = 'liter';
 const ML = 'ml';
 
-const PK = 'PK';
+const PK = 'pk';
+const EACH = 'each';
 
-// units
-// (oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz)
-const UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(ounce)|(gal)|(fl ?oz)|(l(iter)?)|(ml))';
+const UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(each)|(ounce)|(gal)|(fl ?oz)|(l(iter)?)|(ml))';
 const PRICE_REGEX = '[0-9.]*';
 
-const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9.]*${UNIT_REGEX}`, 'gim');
+const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9]+([.]+[0-9]+)?${UNIT_REGEX}`, 'gim');
 const quantityRegex = new RegExp(`[0-9.]+${UNIT_REGEX}`, 'gi');
 const unitRegex = new RegExp(UNIT_REGEX, 'gi');
 const quantityMathRegex = new RegExp(`[0-9.]* ?[x\/-]+ ?[0-9.]*${UNIT_REGEX}`, 'gi');
@@ -24,6 +23,7 @@ const quantityMathRegex = new RegExp(`[0-9.]* ?[x\/-]+ ?[0-9.]*${UNIT_REGEX}`, '
 const AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
 const TARGET_SELECTOR = '[data-test="productCardBody"]';
 const SHIPT_SELECTOR = '[data-test="ProductCard"]';
+const COSTCO_SELECTOR = '#react-views-container ul li';
 const INSTACART_SELECTOR = "[data-radium='true'].item-card";
 const SAY_WEEE_SELECTOR = '.product-media';
 
@@ -37,8 +37,9 @@ const selector = (() => {
     case 'shop.shipt.com':
       return SHIPT_SELECTOR;
     case 'www.instacart.com':
-    case 'sameday.costco.com':
       return INSTACART_SELECTOR;
+    case 'sameday.costco.com':
+      return COSTCO_SELECTOR;
     case 'www.sayweee.com':
       return SAY_WEEE_SELECTOR;
     default:
@@ -147,7 +148,15 @@ const getUnitFromString = (string) => {
 };
 
 const getPricePerUnit = (string) => {
-  const match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz))/gi);
+  let match;
+  if (string.toLowerCase().includes('each')) {
+    match = string.match(/[0-9.]* ?each/gi);
+    const [eachString] = match;
+    const [priceString, unit] = eachString.split(' ');
+    return [Number(priceString), unit];
+  }
+  match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz))/gi);
+
   if (match) {
     const priceMatch = match[0].match(new RegExp(`${PRICE_REGEX}${UNIT_REGEX}`));
     const { 0: unit, index } = priceMatch;
@@ -164,7 +173,6 @@ const runSearch = () => {
   cards.forEach((card) => {
     const { innerText: text } = card;
 
-    let productName;
     let price;
     let unit;
     let pricePerUnit;
@@ -197,7 +205,6 @@ const runSearch = () => {
     if (!pricePerUnit) { // sanity check
       pricePerUnit = (price / quantity);
     }
-    pricePerUnit = pricePerUnit;
 
     if (!unit) {
       const unitMatch = text.match(unitRegex);
@@ -206,7 +213,7 @@ const runSearch = () => {
       unit = rawUnit.toLowerCase().replace(/ /gi, '');
     }
 
-    productName = text.replace(priceString, '');
+    const productName = text.replace(priceString, '');
     let name = productName;
     const nameMatch = name.match(/ - /);
     if (nameMatch) {
@@ -426,11 +433,6 @@ const reduceRequest = (request, sender, sendResponse) => {
         sendResponse(resp);
       });
       break;
-    case 'openUrl': {
-      const { url } = request;
-      window.open(url, '_blank');
-      break;
-    }
     default:
       throw new Error(`unhandled type: ${request.type}`);
   }
