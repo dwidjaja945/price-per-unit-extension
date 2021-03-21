@@ -251,13 +251,15 @@ const runSearch = () => {
   Object.keys(unitGroups).forEach((group) => {
     const array = unitGroups[group];
     unitGroups[group] = array.sort((a, b) => a.price - b.price);
-    unitGroups[group] = unitGroups[group].map((group) => {
-      if (isNaN(group.price)) return null;
+    const unitGroup = [];
+    unitGroups[group].forEach(group => {
+      if (isNaN(group.price)) return;
       const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
       const output = [pricePerUnit, group.name, group.link.href];
       output.link = group.link;
-      return output;
+      unitGroup.push(output);
     });
+    unitGroups[group] = unitGroup;
   });
   return unitGroups;
 };
