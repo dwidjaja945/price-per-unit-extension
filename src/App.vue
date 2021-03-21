@@ -154,6 +154,8 @@ export default {
         localStorage.setItem(CACHED_RESULTS, stringified);
         this.results = resp;
         this.filteredResults = resp;
+        window.open('../popup.html', 'Search Results', 'status=0, height=700, width=600, left=0');
+        window.close();
       }
       this.attemptedSearch = true;
     },

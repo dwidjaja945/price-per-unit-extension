@@ -16,5 +16,6 @@ export const openPage = url => {
     active: true,
   }, tabs => {
     chrome.tabs.sendMessage(tabs[0].id, { type: 'openUrl', url });
+    window.open(url, '_blank', 'noopener noreferrer');
   });
 };

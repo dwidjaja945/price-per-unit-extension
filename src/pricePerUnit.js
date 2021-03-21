@@ -402,7 +402,7 @@ function calculate() {
               if (Object.keys(searchResults).length) {
                 console.log('Price per unit. Lower is better. \n', searchResults);
                 console.log('searchResults: ', searchResults);
-                renderModal(searchResults);
+                // renderModal(searchResults);
                 resolve(searchResults);
                 return searchResults;
               }
@@ -419,7 +419,7 @@ function calculate() {
   });
 }
 
-const reduceRequest = async (request, sender, sendResponse) => {
+const reduceRequest = (request, sender, sendResponse) => {
   switch (request.type) {
     case 'runSearch':
       calculate().then(resp => {

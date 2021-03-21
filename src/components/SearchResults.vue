@@ -2,7 +2,6 @@
   <div class="search-results-root">
     <header>
       <h2>Please make sure to double check values!</h2>
-      <button class="clear" @click="clearResults()">CLEAR</button>
     </header>
 
     <main>
@@ -37,7 +36,7 @@
     </main>
 
     <footer>
-      <button @click="$emit('runAgain')">RUN AGAIN</button>
+      <button class="clear" @click="clearResults()">CLOSE</button>
     </footer>
 
   </div>
@@ -48,6 +47,7 @@ import { openPage } from '@/browserUtils';
 
 const ASCENDING = 'acending';
 const DECENDING = 'decending';
+const CLEAR_RESULTS = 'clearResults';
 
 export default {
   props: {
@@ -67,6 +67,9 @@ export default {
       sortOrder: ASCENDING,
     };
   },
+  unmounted() {
+    this.$emit(CLEAR_RESULTS);
+  },
   watch: {
     searchText() {
       this.$emit('handleSearch', this.searchText);
@@ -77,7 +80,8 @@ export default {
   },
   methods: {
     clearResults() {
-      this.$emit('clearResults');
+      this.$emit(CLEAR_RESULTS);
+      window.close();
     },
     openPage,
   },
@@ -176,6 +180,8 @@ li {
   white-space: nowrap;
 }
 footer {
+  display: flex;
+  justify-content: flex-end;
   padding: 0.75rem;
   box-shadow: 0 0px 12px 1px rgba(0, 0, 0, 0.25);
 }
