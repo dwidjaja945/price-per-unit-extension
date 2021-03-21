@@ -15,7 +15,7 @@ const EACH = 'each';
 const UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(each)|(ounce)|(gal)|(fl ?oz)|(l(iter)?)|(ml))';
 const PRICE_REGEX = '[0-9.]*';
 
-const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9]+([.]+[0-9]+)?${UNIT_REGEX}`, 'gim');
+const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9.]*${UNIT_REGEX}`, 'gim');
 const quantityRegex = new RegExp(`[0-9.]+${UNIT_REGEX}`, 'gi');
 const unitRegex = new RegExp(UNIT_REGEX, 'gi');
 const quantityMathRegex = new RegExp(`[0-9.]* ?[x\/-]+ ?[0-9.]*${UNIT_REGEX}`, 'gi');
@@ -252,6 +252,7 @@ const runSearch = () => {
     const array = unitGroups[group];
     unitGroups[group] = array.sort((a, b) => a.price - b.price);
     unitGroups[group] = unitGroups[group].map((group) => {
+      if (isNaN(group.price)) return null;
       const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
       const output = [pricePerUnit, group.name, group.link.href];
       output.link = group.link;
