@@ -16,11 +16,11 @@
         <div>
           <input type="text" v-model="searchText" placeholder="Search For...">
         </div>
-        <ClickAwayListener :onClickAway="hidePopover" class="selected-units-container">
+        <ClickAwayListener :onClickAway="hidePopover" className="selected-units-container">
           <button type="button" @click="toggleShowUnits()">Show Units &#9660;</button>
           <div class="selected-units-popover" v-if="showUnitPopover">
             <ul>
-              <li :key="`select-units-${unit}`" v-for="unit of units">
+              <li :key="`select-units-${unit}`" v-for="(value, unit) in results">
                 <input
                   :id="`selected-unit-${unit}`"
                   type="checkbox" :checked="selectedUnits.has(unit)"
@@ -34,13 +34,13 @@
           </div>
         </ClickAwayListener>
       </div>
-      <div class="result-container" v-if="Object.keys(results).length > 0">
-        <div class="unit-container" :key="unit" v-for="(value, unit) in results">
+      <div class="result-container" v-if="Object.keys(filteredResults).length > 0">
+        <div class="unit-container" :key="unit" v-for="(value, unit) in filteredResults">
           <b>Unit: {{unit}}</b>
           <ul>
             <li
               :key="item"
-              v-for="[price, item, link] in results[unit]"
+              v-for="[price, item, link] in filteredResults[unit]"
               class="list-item"
               @click="openPage(link)"
             >
@@ -69,7 +69,7 @@ import { openPage } from '@/browserUtils';
 const ASCENDING = 'acending';
 const DECENDING = 'decending';
 const CLEAR_RESULTS = 'clearResults';
-const FILTER_UNITS = 'filterUnits';
+const replaceRegex = /[ $a-z]/gim;
 
 export default {
   components: {
@@ -77,7 +77,6 @@ export default {
   },
   props: {
     results: Object,
-    units: Array,
   },
   computed: {
     ASCENDING() {
@@ -89,6 +88,7 @@ export default {
   },
   data() {
     return {
+      filteredResults: this.results,
       searchText: '',
       sortOrder: ASCENDING,
       selectedUnits: new Set(Object.keys(this.results)),
@@ -100,10 +100,42 @@ export default {
   },
   watch: {
     searchText() {
-      this.$emit('handleSearch', this.searchText);
+      if (!this.results) return;
+      if (!this.searchText.length) {
+        this.filteredResults = this.results;
+        return;
+      }
+      const newFilteredResults = {};
+      const units = Object.keys(this.results);
+      units.forEach(unit => {
+        this.results[unit].forEach(product => {
+          const [, name] = product;
+          if (name.toLowerCase().includes(this.searchText.toLowerCase())) {
+            if (newFilteredResults[unit] === undefined) {
+              newFilteredResults[unit] = [];
+            }
+            newFilteredResults[unit].push(product);
+          }
+        });
+      });
+      this.filteredResults = newFilteredResults;
     },
     sortOrder() {
-      this.$emit('handleSort', this.sortOrder === DECENDING);
+      const isDecending = this.sortOrder === DECENDING;
+      const units = Object.keys(this.results);
+      const newResults = {};
+      units.forEach(unit => {
+        const unitResults = this.results[unit];
+        newResults[unit] = unitResults.sort((a, b) => {
+          const [first] = a;
+          const [second] = b;
+          const firstNumber = Number(first.replace(replaceRegex, ''));
+          const secondNumber = Number(second.replace(replaceRegex, ''));
+          if (isDecending) return secondNumber - firstNumber;
+          return firstNumber - secondNumber;
+        });
+      });
+      this.filteredResults = newResults;
     },
   },
   methods: {
@@ -119,7 +151,16 @@ export default {
       } else {
         this.selectedUnits.add(unit);
       }
-      this.$emit(FILTER_UNITS, this.selectedUnits);
+      if (!this.results) return;
+      const unitsToDelete = { ...this.results };
+      this.selectedUnits.forEach(selectedUnit => {
+        delete unitsToDelete[selectedUnit];
+      });
+      const newFilteredResults = { ...this.results };
+      Object.keys(unitsToDelete).forEach(selectedUnit => {
+        delete newFilteredResults[selectedUnit];
+      });
+      this.filteredResults = newFilteredResults;
     },
     clearResults() {
       this.$emit(CLEAR_RESULTS);
