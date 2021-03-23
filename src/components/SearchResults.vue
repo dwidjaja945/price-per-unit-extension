@@ -16,7 +16,7 @@
         <div>
           <input type="text" v-model="searchText" placeholder="Search For...">
         </div>
-        <div ref="selectedUnitsContainerRef" class="selected-units-container">
+        <ClickAwayListener :onClickAway="hidePopover" class="selected-units-container">
           <button type="button" @click="toggleShowUnits()">Show Units &#9660;</button>
           <div class="selected-units-popover" v-if="showUnitPopover">
             <ul>
@@ -32,7 +32,7 @@
               </li>
             </ul>
           </div>
-        </div>
+        </ClickAwayListener>
       </div>
       <div class="result-container" v-if="Object.keys(results).length > 0">
         <div class="unit-container" :key="unit" v-for="(value, unit) in results">
@@ -63,6 +63,7 @@
 </template>
 
 <script>
+import ClickAwayListener from '@/components/ClickAwayListener.vue';
 import { openPage } from '@/browserUtils';
 
 const ASCENDING = 'acending';
@@ -71,6 +72,9 @@ const CLEAR_RESULTS = 'clearResults';
 const FILTER_UNITS = 'filterUnits';
 
 export default {
+  components: {
+    ClickAwayListener,
+  },
   props: {
     results: Object,
     units: Array,
@@ -91,30 +95,8 @@ export default {
       showUnitPopover: false,
     };
   },
-  created() {
-    // TODO - convert clickAwayListener to separate component
-    document.addEventListener('click', event => {
-      if (document.onclick) document.onclick();
-      if (!this.showUnitPopover) return;
-      const queue = [this.$refs.selectedUnitsContainerRef];
-      let showUnitPopover = false;
-      while (queue.length) {
-        const current = queue.shift();
-        if (current.children.length) {
-          queue.push(...current.children);
-        }
-        if (event.target === current) {
-          showUnitPopover = true;
-          break;
-        }
-        showUnitPopover = false;
-      }
-      this.showUnitPopover = showUnitPopover;
-    });
-  },
   unmounted() {
     this.$emit(CLEAR_RESULTS);
-    document.removeEventListener('click');
   },
   watch: {
     searchText() {
@@ -125,6 +107,9 @@ export default {
     },
   },
   methods: {
+    hidePopover() {
+      this.showUnitPopover = false;
+    },
     toggleShowUnits() {
       this.showUnitPopover = !this.showUnitPopover;
     },
