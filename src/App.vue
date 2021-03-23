@@ -46,11 +46,7 @@
 
     <div v-else>
       <SearchResults
-        :results="filteredResults"
-        :units="Object.keys(results) || []"
-        @handleSort="handleSort"
-        @handleSearch="handleSearch"
-        @filterUnits="filterUnits"
+        :results="results"
         @runAgain="runSearch"
         @clearResults="clearResults"
       />
@@ -74,7 +70,6 @@ export default {
     return {
       isUnderstood: false,
       results: null,
-      filteredResults: null,
       attemptedSearch: false,
       expireTime: null,
     };
@@ -136,7 +131,6 @@ export default {
         const { results, expires } = JSON.parse(cachedItem);
         if (new Date(expires) > new Date()) {
           this.results = results;
-          this.filteredResults = results;
           this.expireTime = expires;
           return;
         }
@@ -155,65 +149,14 @@ export default {
         });
         localStorage.setItem(CACHED_RESULTS, stringified);
         this.results = resp;
-        this.filteredResults = resp;
         window.open('../popup.html', 'Search Results', 'status=0, height=700, width=600, left=0');
         window.close();
       }
       this.attemptedSearch = true;
     },
-    handleSort(isDecending = true) {
-      const replaceRegex = /[ $a-z]/gim;
-      const units = Object.keys(this.results);
-      const newResults = {};
-      units.forEach(unit => {
-        newResults[unit] = this.results[unit].sort((a, b) => {
-          const [first] = a;
-          const [second] = b;
-          const firstNumber = Number(first.replace(replaceRegex, ''));
-          const secondNumber = Number(second.replace(replaceRegex, ''));
-          if (isDecending) return secondNumber - firstNumber;
-          return firstNumber - secondNumber;
-        });
-      });
-      this.filteredResults = newResults;
-    },
-    handleSearch(searchText) {
-      if (!this.results) return;
-      if (!searchText.length) {
-        this.filteredResults = this.results;
-        return;
-      }
-      const newFilteredResults = {};
-      const units = Object.keys(this.results);
-      units.forEach(unit => {
-        this.results[unit].forEach(product => {
-          const [, name] = product;
-          if (name.toLowerCase().includes(searchText.toLowerCase())) {
-            if (newFilteredResults[unit] === undefined) {
-              newFilteredResults[unit] = [];
-            }
-            newFilteredResults[unit].push(product);
-          }
-        });
-      });
-      this.filteredResults = newFilteredResults;
-    },
-    filterUnits(units) {
-      if (!this.results) return;
-      const unitsToDelete = { ...this.results };
-      units.forEach(unit => {
-        delete unitsToDelete[unit];
-      });
-      const newFilteredResults = { ...this.results };
-      Object.keys(unitsToDelete).forEach(unit => {
-        delete newFilteredResults[unit];
-      });
-      this.filteredResults = newFilteredResults;
-    },
     clearResults() {
       localStorage.removeItem(CACHED_RESULTS);
       this.results = null;
-      this.filteredResults = null;
       this.attemptedSearch = false;
     },
   },
