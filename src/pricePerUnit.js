@@ -140,9 +140,14 @@ const getQuantityFromString = (string) => {
 };
 
 const getUnitFromString = (string) => {
-  const unitMatch = string.match(UNIT_REGEX);
+  const unitMatch = string.match(unitRegex);
+  let unit;
   if (unitMatch) {
-    const [unit] = unitMatch;
+    if (unitMatch.length > 1) {
+      unit = unitMatch.find(matchedUnit => matchedUnit !== CT && matchedUnit !== PK);
+    } else {
+      [unit] = unitMatch;
+    }
     return unit.replace(/ /gi, '');
   }
 };
