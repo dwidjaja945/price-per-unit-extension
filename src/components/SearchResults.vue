@@ -2,6 +2,7 @@
   <div class="search-results-root">
     <header>
       <h2>Please make sure to double check values!</h2>
+      <button class="clear" @click="clearResults()">X</button>
     </header>
 
     <main>
@@ -56,7 +57,7 @@
     </main>
 
     <footer>
-      <button class="clear" @click="clearResults()">CLOSE</button>
+      <button class="clear" @click="clearResults()">CLEAR</button>
     </footer>
 
   </div>

@@ -5,6 +5,14 @@
         <h2>
           Calculate Price Per Unit
         </h2>
+        <button
+          :disabled="!isUnderstood || isRunning"
+          type="button"
+          id="Calculate"
+          @click="runSearch"
+        >
+          GO!
+        </button>
       </header>
 
       <main>
@@ -17,6 +25,10 @@
             <p>
               Make sure to double check to see if the values are accurate before
               making your decision.
+            </p>
+            <p>
+              Lastly, make sure when you click the button below, you are doing so
+              in the browser extension, <b>not</b> the popup window!
             </p>
           </blockquote>
         </div>
@@ -33,7 +45,7 @@
         </div>
         <div class="body">
           <button
-            :disabled="!isUnderstood"
+            :disabled="!isUnderstood || isRunning"
             type="button"
             id="Calculate"
             @click="runSearch"
@@ -69,6 +81,7 @@ export default {
   data() {
     return {
       isUnderstood: false,
+      isRunning: false,
       results: null,
       attemptedSearch: false,
       expireTime: null,
@@ -139,6 +152,7 @@ export default {
       this.results = null;
     },
     async runSearch() {
+      this.isRunning = true;
       const resp = await runSearch();
       if (resp) {
         let expires = new Date();
@@ -152,6 +166,7 @@ export default {
         window.open('../popup.html', 'Search Results', 'status=0, height=700, width=600, left=0');
         window.close();
       }
+      this.isRunning = false;
       this.attemptedSearch = true;
     },
     clearResults() {
@@ -172,6 +187,7 @@ h2 {
 button {
   padding: 10px;
   background-color: $primary;
+  border-radius: 6px;
   color: white;
   border: none;
   cursor: pointer;
@@ -210,6 +226,8 @@ main {
 header {
   padding: 10px;
   background-color: $gray;
+  display: flex;
+  justify-content: space-between;
 }
 
 .understand-box {
