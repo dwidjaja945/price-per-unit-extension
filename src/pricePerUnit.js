@@ -12,13 +12,13 @@ const ML = 'ml';
 const PK = 'pk';
 const EACH = 'each';
 
-const UNIT_REGEX = ' ?((oz)|(lb)|(ct)|(pk)|(each)|(ounce)|(gal)|(fl ?oz)|(l(iter)?)|(ml))';
+const UNIT_REGEX = '\\s?((oz)|(lb)|(ct)|(pk)|(each)|(ounce)|(gal)|(fl\\s?oz)|(l(iter)?)|(ml))';
 const PRICE_REGEX = '[0-9.]*';
 
-const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})? ?[x\/-]* ?[0-9.]*${UNIT_REGEX}`, 'gim');
+const quantityMatchRegex = new RegExp(`[0-9.]+(${UNIT_REGEX})?\\s?[x\/-]*\\s?[0-9.]*${UNIT_REGEX}`, 'gim');
 const quantityRegex = new RegExp(`[0-9.]+${UNIT_REGEX}`, 'gi');
 const unitRegex = new RegExp(UNIT_REGEX, 'gi');
-const quantityMathRegex = new RegExp(`[0-9.]* ?[x\/-]+ ?[0-9.]*${UNIT_REGEX}`, 'gi');
+const quantityMathRegex = new RegExp(`[0-9.]*\\s?[x\/-]+\\s?[0-9.]*${UNIT_REGEX}`, 'gi');
 
 const AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
 const TARGET_SELECTOR = '[data-test="productCardBody"]';
@@ -152,15 +152,16 @@ const getUnitFromString = (string) => {
   }
 };
 
-const getPricePerUnit = (string) => {
+const getPricePerUnit = (_string) => {
+  const string = _string.replace(/\s/gim, '');
   let match;
   if (string.toLowerCase().includes('each')) {
-    match = string.match(/[0-9.]* ?each/gi);
+    match = string.match(/[0-9.]*\\s?each/gi);
     const [eachString] = match;
     const [priceString, unit] = eachString.split(' ');
     return [Number(priceString), unit];
   }
-  match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl ?oz))/gi);
+  match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl\\s?oz))/gmi);
 
   if (match) {
     const priceMatch = match[0].match(new RegExp(`${PRICE_REGEX}${UNIT_REGEX}`));
