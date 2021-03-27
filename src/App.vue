@@ -96,6 +96,7 @@ export default {
       this.$refs.poller = setInterval(() => {
         if (new Date(this.expireTime) < new Date()) {
           clearInterval(this.$refs.poller);
+          delete this.$refs.poller;
           this.clearResults();
         }
       }, 3000);
