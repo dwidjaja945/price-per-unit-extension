@@ -65,6 +65,7 @@
 
 <script>
 import ClickAwayListener from '@/components/ClickAwayListener.vue';
+import Fuse from 'fuse.js';
 import { openPage } from '@/browserUtils';
 
 const ASCENDING = 'acending';
@@ -90,11 +91,18 @@ export default {
   data() {
     return {
       filteredResults: this.results,
+      fuzzySearchResults: [],
       searchText: '',
       sortOrder: ASCENDING,
       selectedUnits: new Set(Object.keys(this.results)),
       showUnitPopover: false,
     };
+  },
+  created() {
+    this.setFuzzySearchResults();
+    this.$refs.fuseRef = new Fuse(this.fuzzySearchResults, {
+      keys: ['searchString'],
+    });
   },
   unmounted() {
     this.$emit(CLEAR_RESULTS);
@@ -106,20 +114,35 @@ export default {
         this.filteredResults = this.results;
         return;
       }
-      const newFilteredResults = {};
-      const units = Object.keys(this.results);
-      units.forEach(unit => {
-        this.results[unit].forEach(product => {
-          const [, name] = product;
-          if (name.toLowerCase().includes(this.searchText.toLowerCase())) {
-            if (newFilteredResults[unit] === undefined) {
-              newFilteredResults[unit] = [];
-            }
-            newFilteredResults[unit].push(product);
+      const newFuzzySearchResults = this.$refs.fuseRef.search(this.searchText);
+      const organizedFuzzyResults = newFuzzySearchResults
+        .reduce((accum, result) => {
+          const output = accum;
+          const {
+            item: {
+              unit, searchString,
+            },
+          } = result;
+          if (output[unit] === undefined) {
+            output[unit] = [];
           }
-        });
-      });
-      this.filteredResults = newFilteredResults;
+          output[unit].push(searchString);
+          return output;
+        }, {});
+      const units = Object.keys(organizedFuzzyResults);
+      this.filteredResults = units
+        .reduce((accum, unit) => {
+          const newFilteredResults = accum;
+          const set = new Set(organizedFuzzyResults[unit]);
+          newFilteredResults[unit] = this.results[unit]
+            .map(item => {
+              const [, searchString] = item;
+              if (set.has(searchString)) return item;
+              return null;
+            })
+            .filter(item => item != null);
+          return newFilteredResults;
+        }, {});
     },
     sortOrder() {
       const isDecending = this.sortOrder === DECENDING;
@@ -162,6 +185,18 @@ export default {
         delete newFilteredResults[selectedUnit];
       });
       this.filteredResults = newFilteredResults;
+    },
+    setFuzzySearchResults() {
+      const output = [];
+      const units = Object.keys(this.results);
+      units.forEach(unit => {
+        const unitList = this.results[unit];
+        unitList.forEach(item => {
+          const [, searchString] = item;
+          output.push({ unit, searchString });
+        });
+      });
+      this.fuzzySearchResults = output;
     },
     clearResults() {
       this.$emit(CLEAR_RESULTS);
