@@ -41,6 +41,13 @@
           <p>
             If it still does not work, try refreshing the browser, otherwise,
             uh oh! That's a bug!
+            <a
+              href="https://dylanwidjaja.com/contact/report-bug/pricePerUnit"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Report it!
+            </a>
           </p>
         </div>
         <div class="body">
