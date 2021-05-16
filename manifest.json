@@ -13,7 +13,10 @@
         "https://sameday.costco.com/*",
         "https://instacart.com/*",
         "https://www.instacart.com/*",
-        "https://sayweee.com/*"
+        "https://sayweee.com/*",
+        "https://www.sayweee.com/*",
+        "https://fredmeyer.com/*",
+        "https://www.fredmeyer.com/*"
       ],
       "js": [
         "./src/pricePerUnit.js"

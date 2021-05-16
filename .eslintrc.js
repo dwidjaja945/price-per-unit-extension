@@ -17,5 +17,10 @@ module.exports = {
     '@typescript-eslint/no-var-requires': 'off',
     'no-plusplus': 'off',
     'arrow-parens': 'off',
+    'no-continue': 'off',
+    'no-param-reassign': 'off',
+    'no-restricted-syntax': 'off',
+    'guard-for-in': 'off',
+    'import/prefer-default-export': 'off'
   },
 };

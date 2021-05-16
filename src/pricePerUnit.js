@@ -21,14 +21,25 @@ const unitRegex = new RegExp(UNIT_REGEX, 'gi');
 const quantityMathRegex = new RegExp(`[0-9.]*\\s?[x\/-]+\\s?[0-9.]*${UNIT_REGEX}`, 'gi');
 
 const AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
-const TARGET_SELECTOR = '[data-test="productCardBody"]';
+const TARGET_SELECTOR = {
+  cardSelector: '[data-test="productCardBody"]',
+  priceSelector: '[data-test="product-card-price"]',
+  nameSelector: '[data-test="product-title"]',
+  quantitySelector: '[data-test="product-title"]',
+};
 const SHIPT_SELECTOR = '[data-test="ProductCard"]';
 const COSTCO_SELECTOR = '#react-views-container ul li';
 const INSTACART_SELECTOR = "[data-radium='true'].item-card";
 const SAY_WEEE_SELECTOR = '.product-media';
+const FRED_MEYER_SELECTOR = {
+  cardSelector: '.ProductCard',
+  priceSelector: '[typeof="Price"]',
+  nameSelector: '[data-qa="cart-page-item-description"]',
+  quantitySelector: '[data-qa="cart-page-item-sizing"]',
+};
 
 const domain = document.location.hostname;
-const selector = (() => {
+const getSelector = () => {
   switch (domain.toLowerCase()) {
     case 'www.target.com':
       return TARGET_SELECTOR;
@@ -42,10 +53,12 @@ const selector = (() => {
       return COSTCO_SELECTOR;
     case 'www.sayweee.com':
       return SAY_WEEE_SELECTOR;
+    case 'www.fredmeyer.com':
+      return FRED_MEYER_SELECTOR;
     default:
       throw new Error(`Unhandled domain: ${domain}`);
   }
-})();
+};
 
 const getUnit = (unit) => {
   switch (unit) {
@@ -156,12 +169,12 @@ const getPricePerUnit = (_string) => {
   const string = _string.replace(/\s/gim, '');
   let match;
   if (string.toLowerCase().includes('each')) {
-    match = string.match(/[0-9.]*\\s?each/gi);
+    match = string.match(/[0-9.]*\s?each/gi);
     const [eachString] = match;
     const [priceString, unit] = eachString.split(' ');
     return [Number(priceString), unit];
   }
-  match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl\\s?oz))/gmi);
+  match = string.match(/[0-9.]*\/((oz)|(lb)|(ct)|(ounce)|(gal)|(fl\s?oz))/gmi);
 
   if (match) {
     const priceMatch = match[0].match(new RegExp(`${PRICE_REGEX}${UNIT_REGEX}`));
@@ -172,7 +185,58 @@ const getPricePerUnit = (_string) => {
   return null;
 };
 
+function createUnitGroups(table) {
+  const unitGroups = {};
+  Object.keys(table).forEach((name) => {
+    const {
+      price, unit: _unit, link, product,
+    } = table[name];
+    const unit = getUnit(_unit);
+    if (unitGroups[unit] === undefined) {
+      unitGroups[unit] = [];
+    }
+    unitGroups[unit].push({
+      name: product, price, unit, link,
+    });
+  });
+  return unitGroups;
+}
+
+function sortUnitGroups(unitGroups) {
+  Object.keys(unitGroups).forEach((group) => {
+    const array = unitGroups[group];
+    unitGroups[group] = array.sort((a, b) => a.price - b.price);
+    const unitGroup = [];
+    unitGroups[group].forEach(group => {
+      if (isNaN(group.price)) return;
+      const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
+      const output = [pricePerUnit, group.name, group.link.href];
+      output.link = group.link;
+      unitGroup.push(output);
+    });
+    unitGroups[group] = unitGroup;
+  });
+  return unitGroups;
+}
+
 const runSearch = () => {
+  let selector = getSelector();
+  let priceSelector;
+  let nameSelector;
+  let quantitySelector;
+  if (selector instanceof Object) {
+    const {
+      cardSelector,
+      priceSelector: _priceSelector,
+      nameSelector: _nameSelector,
+      quantitySelector: _quantitySelector,
+    } = selector;
+    selector = cardSelector;
+    priceSelector = _priceSelector;
+    nameSelector = _nameSelector;
+    quantitySelector = _quantitySelector;
+  }
+
   const cards = document.querySelectorAll(selector);
 
   const table = {};
@@ -186,12 +250,15 @@ const runSearch = () => {
 
     const linkEl = card.querySelector('a');
 
-    const dollarMatch = text.match(/\$[0-9]+[.]?[0-9]{2}/m);
+    const dollarText = priceSelector ? card.querySelector(priceSelector)?.innerText : text;
+    if (!dollarText) return;
+    const dollarMatch = dollarText.replace(/\s/gim, '').match(/\$[0-9]+[.]?[0-9]{2}/m);
     if (!dollarMatch) return;
     const { 0: priceString } = dollarMatch;
     price = Number(priceString.replace(/\$/gi, ''));
 
-    const quantityMatch = text.match(quantityMatchRegex);
+    const quantityText = quantitySelector ? card.querySelector(quantitySelector).innerText : text;
+    const quantityMatch = quantityText.match(quantityMatchRegex);
     if (!quantityMatch) return;
     let quantityString = quantityMatch.find((string) => quantityMathRegex.test(string) || quantityRegex.test(string))
       ?? quantityMatch[0];
@@ -208,9 +275,6 @@ const runSearch = () => {
       unit = getUnitFromString(quantityString);
       pricePerUnit = (price / quantity);
     }
-    if (!pricePerUnit) { // sanity check
-      pricePerUnit = (price / quantity);
-    }
 
     if (!unit) {
       const unitMatch = text.match(unitRegex);
@@ -219,7 +283,8 @@ const runSearch = () => {
       unit = rawUnit.toLowerCase().replace(/ /gi, '');
     }
 
-    const productName = text.replace(priceString, '');
+    const productText = nameSelector ? card.querySelector(nameSelector).innerText : text;
+    const productName = productText.replace(priceString, '');
     let name = productName;
     const nameMatch = name.match(/ - /);
     if (nameMatch) {
@@ -238,166 +303,10 @@ const runSearch = () => {
     }
   });
 
-  const unitGroups = {};
-  Object.keys(table).forEach((name) => {
-    const {
-      price, unit: _unit, link, product,
-    } = table[name];
-    const unit = getUnit(_unit);
-    if (unitGroups[unit] === undefined) {
-      unitGroups[unit] = [];
-    }
-    unitGroups[unit].push({
-      name: product, price, unit, link,
-    });
-  });
-
+  const unitGroups = createUnitGroups(table);
   handleConversions(unitGroups);
-
-  Object.keys(unitGroups).forEach((group) => {
-    const array = unitGroups[group];
-    unitGroups[group] = array.sort((a, b) => a.price - b.price);
-    const unitGroup = [];
-    unitGroups[group].forEach(group => {
-      if (isNaN(group.price)) return;
-      const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
-      const output = [pricePerUnit, group.name, group.link.href];
-      output.link = group.link;
-      unitGroup.push(output);
-    });
-    unitGroups[group] = unitGroup;
-  });
-  return unitGroups;
+  return sortUnitGroups(unitGroups);
 };
-
-// ==== Modal Logic Start ====
-const applyStyles = (node, styles) => {
-  for (style in styles) {
-    node.style[style] = styles[style];
-  }
-};
-
-const removeModal = () => {
-  const oldModal = document.querySelector('#search_results_id');
-  if (oldModal) { document.body.removeChild(oldModal); }
-};
-
-function renderModal(searchResults) {
-  removeModal();
-  const modal = document.createElement('div');
-  modal.id = 'search_results_id';
-  applyStyles(modal, {
-    position: 'fixed',
-    top: 0,
-    bottom: 0,
-    right: 0,
-    left: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    zIndex: 10000,
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-start',
-  });
-  const modalContent = document.createElement('div');
-  applyStyles(modalContent, {
-    top: '10px',
-    right: '10px',
-    height: '70%',
-    width: '35%',
-    minWidth: '500px',
-    backgroundColor: 'white',
-    borderRadius: '6px',
-    margin: '20px',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 0 17px 3px rgba(0, 0, 0, 0.25)',
-  });
-  const modalHeader = document.createElement('header');
-  applyStyles(modalHeader, {
-    padding: '10px 15px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#eee',
-  });
-  const headerLeft = document.createElement('h4');
-  headerLeft.innerText = 'Please double check values!';
-  const headerRight = document.createElement('button');
-  headerRight['aria-label'] = 'close result list';
-  headerRight.innerText = 'X';
-  headerRight.onclick = () => {
-    document.body.removeChild(modal);
-  };
-  append(modalHeader).add(headerLeft, headerRight);
-  const modalBody = document.createElement('div');
-  applyStyles(modalBody, {
-    padding: '10px',
-    overflow: 'scroll',
-  });
-  const units = Object.keys(searchResults);
-  units.forEach((unit) => {
-    const unitList = document.createElement('ul');
-    const list = searchResults[unit];
-    list.forEach((result) => {
-      const listItem = document.createElement('li');
-      applyStyles(listItem, {
-        padding: '5px',
-        borderBottom: '1px solid #eee',
-        marginBottom: '5px',
-        cursor: 'pointer',
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
-      });
-      listItem.onclick = () => {
-        removeModal();
-        result.link.click();
-      };
-      listItem.innerHTML = `<b>${result[0]}</b>: ${result[1]}`;
-      append(unitList).add(listItem);
-    });
-    const label = document.createElement('h4');
-    label.innerText = `Unit: ${unit}`;
-    append(label).to(modalBody);
-    append(unitList).to(modalBody);
-  });
-
-  if (!units.length) {
-    const notice = document.createElement('p');
-    notice.innerText = 'No Results Found!';
-    append(modalBody).add(notice);
-  }
-
-  append(document.body)
-    .add(modal);
-  append(modal)
-    .add(modalContent);
-  append(modalContent)
-    .add(modalHeader, modalBody);
-}
-
-function append(...nodes) {
-  const output = {
-    to: (targetNode) => {
-      nodes.forEach((node) => {
-        targetNode.appendChild(node);
-      });
-      return output;
-    },
-    add: (...childNodes) => {
-      if (nodes.length > 1) {
-        throw new Error('You can not add to multiple nodes');
-      }
-      childNodes.forEach((childNode) => {
-        nodes[0].appendChild(childNode);
-      });
-      return output;
-    },
-  };
-  return output;
-}
-// ==== Modal Logic End ====
 
 // actual work is run here
 function calculate() {
