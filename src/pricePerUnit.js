@@ -23,7 +23,7 @@ const quantityMathRegex = new RegExp(`[0-9.]*\\s?[x\/-]+\\s?[0-9.]*${UNIT_REGEX}
 const AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
 const TARGET_SELECTOR = {
   cardSelector: '[data-test="productCardBody"]',
-  priceSelector: '[data-test="product-card-price"]',
+  priceSelector: '[data-test="current-price"]',
   nameSelector: '[data-test="product-title"]',
   quantitySelector: '[data-test="product-title"]',
 };
@@ -250,6 +250,7 @@ const runSearch = () => {
 
     const linkEl = card.querySelector('a');
 
+    debugger;
     const dollarText = priceSelector ? card.querySelector(priceSelector)?.innerText : text;
     if (!dollarText) return;
     const dollarMatch = dollarText.replace(/\s/gim, '').match(/\$[0-9]+[.]?[0-9]{2}/m);
@@ -260,7 +261,7 @@ const runSearch = () => {
     const quantityText = quantitySelector ? card.querySelector(quantitySelector).innerText : text;
     const quantityMatch = quantityText.match(quantityMatchRegex);
     if (!quantityMatch) return;
-    let quantityString = quantityMatch.find((string) => quantityMathRegex.test(string) || quantityRegex.test(string))
+    let quantityString = quantityMatch?.find((string) => quantityMathRegex.test(string) || quantityRegex.test(string))
       ?? quantityMatch[0];
     quantityString = quantityString.toLowerCase();
     // check to see if site already provides price per unit
