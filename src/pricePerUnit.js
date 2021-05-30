@@ -250,7 +250,6 @@ const runSearch = () => {
 
     const linkEl = card.querySelector('a');
 
-    debugger;
     const dollarText = priceSelector ? card.querySelector(priceSelector)?.innerText : text;
     if (!dollarText) return;
     const dollarMatch = dollarText.replace(/\s/gim, '').match(/\$[0-9]+[.]?[0-9]{2}/m);
