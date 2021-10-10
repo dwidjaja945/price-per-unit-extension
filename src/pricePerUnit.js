@@ -45,7 +45,7 @@ const getSelector = () => {
       return TARGET_SELECTOR;
     case 'www.amazon.com':
       return AMAZON_SELECTOR;
-    case 'shop.shipt.com':
+    case 'www.shipt.com':
       return SHIPT_SELECTOR;
     case 'www.instacart.com':
       return INSTACART_SELECTOR;
