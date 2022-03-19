@@ -22,7 +22,7 @@ const quantityMathRegex = new RegExp(`[0-9.]*\\s?[x\/-]+\\s?[0-9.]*${UNIT_REGEX}
 
 const AMAZON_SELECTOR = '[data-component-type="s-search-result"]';
 const TARGET_SELECTOR = {
-  cardSelector: '[data-test="productCardBody"]',
+  cardSelector: '[data-test="@web/ProductCard/ProductCardVariantDefault"]',
   priceSelector: '[data-test="current-price"]',
   nameSelector: '[data-test="product-title"]',
   quantitySelector: '[data-test="product-title"]',
