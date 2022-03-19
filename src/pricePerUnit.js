@@ -28,7 +28,7 @@ const TARGET_SELECTOR = {
   quantitySelector: '[data-test="product-title"]',
 };
 const SHIPT_SELECTOR = '[data-test="ProductCard"]';
-const COSTCO_SELECTOR = '#react-views-container ul li';
+const COSTCO_SELECTOR = 'ol.cell-container .product-wrapper.cell-wrapper';
 const INSTACART_SELECTOR = "[data-radium='true'].item-card";
 const SAY_WEEE_SELECTOR = '.product-media';
 const FRED_MEYER_SELECTOR = {
@@ -210,7 +210,7 @@ function sortUnitGroups(unitGroups) {
     unitGroups[group].forEach(group => {
       if (isNaN(group.price)) return;
       const pricePerUnit = `$${group.price.toFixed(3)} per ${group.unit}`;
-      const output = [pricePerUnit, group.name, group.link.href];
+      const output = [pricePerUnit, group.name, group?.link?.href];
       output.link = group.link;
       unitGroup.push(output);
     });
@@ -238,6 +238,7 @@ const runSearch = () => {
   }
 
   const cards = document.querySelectorAll(selector);
+  console.log({ cards });
 
   const table = {};
   cards.forEach((card) => {
